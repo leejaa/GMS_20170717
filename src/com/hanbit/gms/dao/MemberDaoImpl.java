@@ -1,75 +1,68 @@
 package com.hanbit.gms.dao;
 
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.hanbit.gms.constant.Database;
+import com.hanbit.gms.constant.SQL;
+import com.hanbit.gms.constant.Vendor;
 import com.hanbit.gms.domain.MemberBean;
+import com.hanbit.gms.factory.DatabaseFactory;
 public class MemberDaoImpl implements MemberDao{
-	public MemberDaoImpl() {
-		try {
-			Class.forName(Database.DRIVER);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	List<MemberBean> members;
+	MemberBean member;
+	public static MemberDaoImpl getInstance() {
+		return new MemberDaoImpl();
+	}
+	private MemberDaoImpl() {
 	}
 	
 	@Override
-	public int insert(MemberBean member) {
-		int rs=0;
-		try {
-			rs=DriverManager
-					.getConnection(Database.URL,Database.USERID,Database.PASSWORD)
-					.createStatement()
-					.executeUpdate(
-					String.format("INSERT INTO Member VALUES('%s','%s','%s','%s',SYSDATE)",member.getId(),member.getName(),member.getPw(),member.getSsn()));
-		} catch (Exception e) {
-			e.printStackTrace();
+	public String insert(MemberBean member) {
+		String result="0";
+		try{
+		PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+				.prepareStatement(SQL.MEMBER_INSERT);
+		pstmt.setString(1, member.getId());
+		pstmt.setString(2, member.getName());
+		pstmt.setString(3, member.getPw());
+		pstmt.setString(4, member.getSsn());
+		result=String.valueOf(pstmt.executeUpdate());
+		}catch (Exception e) {
 		}
-		return rs;
+		return result;
 	}
-
 	@Override
 	public List<MemberBean> selectAll() {
-		List<MemberBean> list=new ArrayList<>();
-		MemberBean member=null;
-		try {
-			ResultSet rs=DriverManager
-					.getConnection(Database.URL,Database.USERID,Database.PASSWORD)
-					.createStatement()
-					.executeQuery(
-					String.format("SELECT * FROM %s", Database.TABLE_MEMBER));
+		members=new ArrayList<>();
+		
+		try{
+			ResultSet rs=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.MEMBER_LIST).executeQuery();
 			while(rs.next()){
 				member=new MemberBean();
 				member.setId(rs.getString(Database.MEMBER_ID));
 				member.setName(rs.getString(Database.MEMBER_NAME));
 				member.setPw(rs.getString(Database.MEMBER_PASSWORD));
-				member.setRegdate(rs.getString(Database.MEMBER_REGDATE));
 				member.setSsn(rs.getString(Database.MEMBER_SSN));
-				list.add(member);
+				member.setRegdate(rs.getString(Database.MEMBER_REGDATE));
+				members.add(member);
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+			
+		}catch (Exception e) {
 		}
-		return list;
+		return members;
 	}
 
 	@Override
-	public int count() {
-		int count=0;
-		try {
-			ResultSet rs=DriverManager
-					.getConnection(Database.URL,Database.USERID,Database.PASSWORD)
-					.createStatement()
-					.executeQuery(
-					String.format("SELECT COUNT(*) AS COUNT FROM %s",Database.TABLE_MEMBER ));
-			if(rs.next()){
-				count=rs.getInt("count");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
+	public String count() {
+		String count="0";
+		try{
+			count=String.valueOf(DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection().prepareStatement(SQL.MEMBER_COUNT).executeUpdate());
+		}catch (Exception e) {
 		}
 		return count;
 	}
@@ -78,10 +71,10 @@ public class MemberDaoImpl implements MemberDao{
 	public MemberBean selectById(String id) {
 		MemberBean member=new MemberBean();
 		try {
-			ResultSet rs=DriverManager.getConnection(Database.URL,Database.USERID,Database.PASSWORD)
-					.createStatement()
-					.executeQuery(
-					String.format("SELECT * FROM %s WHERE %s='%s'",Database.TABLE_MEMBER,Database.MEMBER_ID,id));
+			PreparedStatement pstmt=DriverManager.getConnection(Database.ORACLE_URL,Database.USERID,Database.PASSWORD)
+					.prepareStatement(SQL.MEMBER_FINDBYID);
+			pstmt.setString(1, id);
+			ResultSet rs=pstmt.executeQuery();
 			if(rs.next()){
 				member.setName(rs.getString(Database.MEMBER_NAME));
 				member.setId(rs.getString(Database.MEMBER_ID));
@@ -100,11 +93,10 @@ public class MemberDaoImpl implements MemberDao{
 		List<MemberBean> list=new ArrayList<>();
 		MemberBean member=new MemberBean();
 		try {
-			ResultSet rs=DriverManager
-					.getConnection(Database.URL,Database.USERID,Database.PASSWORD)
-					.createStatement()
-					.executeQuery(
-					String.format("SELECT * FROM %s WHERE %s='%s'", Database.TABLE_MEMBER,Database.MEMBER_NAME,name));
+			PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.MEMBER_FINDBYNAME);
+			pstmt.setString(1, name);
+			ResultSet rs=pstmt.executeQuery();
 			while(rs.next()){
 				member.setId(rs.getString(Database.MEMBER_ID));
 				member.setName(rs.getString(Database.MEMBER_NAME));
@@ -120,15 +112,15 @@ public class MemberDaoImpl implements MemberDao{
 	}
 
 	@Override
-	public int update(MemberBean member) {
-		int rs=0;
+	public String update(MemberBean member) {
+		String rs="0";
 		try {
-			rs=DriverManager
-					.getConnection(Database.URL,Database.USERID,Database.PASSWORD)
-					.createStatement()
-					.executeUpdate(
-	String.format("UPDATE %s SET %s='%s',%s='%s',%s='%s' WHERE %s='%s'",
-			Database.TABLE_MEMBER,Database.MEMBER_NAME,member.getName(),Database.MEMBER_PASSWORD,member.getPw(),Database.MEMBER_SSN,member.getSsn(),Database.MEMBER_ID,member.getId()));
+			PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.MEMBER_UPDATE);
+			pstmt.setString(1, member.getName());
+			pstmt.setString(2, member.getPw());
+			pstmt.setString(3, member.getId());
+			rs=String.valueOf(pstmt.executeUpdate());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -136,14 +128,13 @@ public class MemberDaoImpl implements MemberDao{
 	}
 
 	@Override
-	public int delete(String id) {
-		int rs=0;
+	public String delete(String id) {
+		String rs="0";
 		try {
-			rs=DriverManager
-					.getConnection(Database.URL,Database.USERID,Database.PASSWORD)
-					.createStatement()
-					.executeUpdate(
-					String.format("DELETE %s WHERE %s='%s'",Database.TABLE_MEMBER,Database.MEMBER_ID,id ));
+			PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.MEMBER_DELETE);
+			pstmt.setString(1, id);
+			rs=String.valueOf(pstmt.executeUpdate());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

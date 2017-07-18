@@ -6,7 +6,7 @@ import com.hanbit.gms.domain.MemberBean;
 public interface MemberService {
 	public String addMember(MemberBean member);
 	public List<MemberBean> getMembers();
-	public int countMembers();
+	public String countMembers();
 	public MemberBean memberById(String id);
 	public List<MemberBean> getMemberByName(String name);
 	public String modify(MemberBean member);

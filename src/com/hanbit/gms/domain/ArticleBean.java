@@ -66,7 +66,6 @@ public class ArticleBean implements Serializable{
 		this.regdate = regdate;
 	}
 
-
 	public String toString(){
 		return String.format("글번호 : %d / 아이디 : %s / 제목 : %s / 내용 : %s / 조회수 : %d / 날짜 : %s\n", 
 				articleSeq,id,title,content,hitcount,regdate);

@@ -1,52 +1,45 @@
 package com.hanbit.gms.service;
 
 import java.util.List;
-
-import com.hanbit.gms.dao.ArticleDao;
 import com.hanbit.gms.dao.ArticleDaoImpl;
 import com.hanbit.gms.domain.ArticleBean;
 
 public class ArticleServiceImpl implements ArticleService{
-	ArticleDao dao=new ArticleDaoImpl();
-	@Override
+	public static ArticleServiceImpl getInstance(){
+		return new ArticleServiceImpl();
+	}
 	public String write(ArticleBean article) {
-		return dao.insert(article)==0?"등록실패":"등록성공";
+		return ArticleDaoImpl.getInstance().insert(article)==0?"존재하지 않는 아이디입니다":"등록성공";
 	}
 
 	@Override
 	public List<ArticleBean> getArticles() {
-		return dao.selectAll();
+		return ArticleDaoImpl.getInstance().selectAll();
 	}
 
 	@Override
 	public List<ArticleBean> findById(String id) {
-		return dao.selectById(id);
+		return ArticleDaoImpl.getInstance().selectById(id);
 	}
 
 	@Override
 	public ArticleBean findBySeq(String seq) {
-		return dao.selectBySeq(seq);
+		return ArticleDaoImpl.getInstance().selectBySeq(seq);
 	}
 
 	@Override
 	public String modify(ArticleBean article) {
-		if(article.getTitle().equals("")){
-			article.setTitle(findBySeq(String.valueOf(article.getArticleSeq())).getTitle());
-		}
-		if(article.getContent().equals("")){
-			article.setContent(findBySeq(String.valueOf(article.getArticleSeq())).getContent());
-		}
-		return dao.update(article)==0?"글수정실패":"글수정성공";
+		return ArticleDaoImpl.getInstance().update(article)==0?"수정하고자하는 글번호가 존재하지 않습니다":"글수정성공";
 	}
 
 	@Override
 	public String remove(String seq) {
-		return dao.delete(seq)==0?"삭제실패":"삭제성공";
+		return ArticleDaoImpl.getInstance().delete(seq)==0?"글번호가 존재하지 않습니다":"삭제성공";
 	}
 
 	@Override
 	public int count() {
-		return dao.count();
+		return ArticleDaoImpl.getInstance().count();
 	}
 
 }

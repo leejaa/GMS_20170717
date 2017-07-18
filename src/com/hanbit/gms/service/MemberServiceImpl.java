@@ -6,29 +6,29 @@ import com.hanbit.gms.dao.MemberDaoImpl;
 import com.hanbit.gms.domain.MemberBean;
 
 public class MemberServiceImpl implements MemberService{
-	MemberDao dao;
-	public MemberServiceImpl() {
-		dao=new MemberDaoImpl();
+	public static MemberServiceImpl getInstance() {
+		return new MemberServiceImpl();
 	}
+	private MemberServiceImpl() {}
 	@Override
 	public String addMember(MemberBean member) {
-		return dao.insert(member)==0?"회원가입 실패":"회원가입 성공";
+		return MemberDaoImpl.getInstance().insert(member)=="0"?"회원가입 실패":"회원가입 성공";
 	}
 	@Override
 	public List<MemberBean> getMembers() {
-		return dao.selectAll();
+		return MemberDaoImpl.getInstance().selectAll();
 	}
 	@Override
-	public int countMembers() {
-		return dao.count();
+	public String countMembers() {
+		return MemberDaoImpl.getInstance().count();
 	}
 	@Override
 	public MemberBean memberById(String id) {
-		return dao.selectById(id);
+		return MemberDaoImpl.getInstance().selectById(id);
 	}
 	@Override
 	public List<MemberBean> getMemberByName(String name) {
-		return dao.selectByName(name);
+		return MemberDaoImpl.getInstance().selectByName(name);
 	}
 	@Override
 	public String modify(MemberBean param) {
@@ -41,10 +41,10 @@ public class MemberServiceImpl implements MemberService{
 		if(param.getSsn().equals("")){
 			param.setSsn(memberById(param.getId()).getSsn());
 		}
-		return dao.update(param)==0?"회원정보수정 실패":"회원정보수정 성공";
+		return MemberDaoImpl.getInstance().update(param)=="0"?"회원정보수정 실패":"회원정보수정 성공";
 	}
 	@Override
 	public String remove(String id) {
-		return dao.delete(id)==0?"회원탈퇴실패":"회원탈퇴성공";
+		return MemberDaoImpl.getInstance().delete(id)=="0"?"회원탈퇴실패":"회원탈퇴성공";
 	}
 }

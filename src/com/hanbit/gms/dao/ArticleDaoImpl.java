@@ -1,28 +1,39 @@
 package com.hanbit.gms.dao;
-import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.hanbit.gms.constant.Database;
+import com.hanbit.gms.constant.SQL;
+import com.hanbit.gms.constant.Vendor;
 import com.hanbit.gms.domain.ArticleBean;
+import com.hanbit.gms.factory.DatabaseFactory;
 
 public class ArticleDaoImpl implements ArticleDao{
 List<ArticleBean> articles;
 ArticleBean article;
+
+public static ArticleDaoImpl getInstance() {
+	try {
+		Class.forName(Database.ORACLE_DRIVER);
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+	return new ArticleDaoImpl();
+}
 	@Override
 	public int insert(ArticleBean article) {
 		int result=0;
 		try {
-			Class.forName(Database.DRIVER);
-			Connection conn=DriverManager.getConnection(Database.URL,Database.USERID,Database.PASSWORD);
-			Statement stmt=conn.createStatement();
-			String sql=String.format("INSERT INTO Board VALUES (articles_seq.nextval,'%s','%s','%s',%d,SYSDATE)",
-					article.getId(),article.getTitle(),article.getContent(),article.getHitcount()
-					);
-			result=stmt.executeUpdate(sql);
+			PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.ARTICLE_INSERT);
+			pstmt.setString(1, article.getId());
+			pstmt.setString(2, article.getTitle());
+			pstmt.setString(3, article.getContent());
+			pstmt.setInt(4, article.getHitcount());
+			result=pstmt.executeUpdate();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -32,21 +43,17 @@ ArticleBean article;
 	@Override
 	public List<ArticleBean> selectAll() {
 		articles=new ArrayList<>();
-		
 		try {
-			Class.forName(Database.DRIVER);
-			Connection conn=DriverManager.getConnection(Database.URL,Database.USERID,Database.PASSWORD);
-			Statement stmt=conn.createStatement();
-			String sql="SELECT * FROM Board";
-			ResultSet rs=stmt.executeQuery(sql);
+			ResultSet rs=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.ARTICLE_LIST).executeQuery();
 			while(rs.next()){
 				article=new ArticleBean();
-				article.setArticleSeq(rs.getInt("article_seq"));
-				article.setId(rs.getString("id"));
-				article.setTitle(rs.getString("title"));
-				article.setContent(rs.getString("content"));
-				article.setHitcount(rs.getInt("hitcount"));
-				article.setRegdate(rs.getString("regdate"));
+				article.setArticleSeq(rs.getInt(Database.ARTICLE_SEQ));
+				article.setId(rs.getString(Database.ARTICLE_ID));
+				article.setTitle(rs.getString(Database.ARTICLE_TITLE));
+				article.setContent(rs.getString(Database.ARTICLE_CONTENT));
+				article.setHitcount(rs.getInt(Database.ARTICLE_HITCOUNT));
+				article.setRegdate(rs.getString(Database.ARTICLE_REGDATE));
 				articles.add(article);
 			}
 			
@@ -59,21 +66,19 @@ ArticleBean article;
 	@Override
 	public List<ArticleBean> selectById(String id) {
 		articles=new ArrayList<>();
-		
 		try {
-			Class.forName(Database.DRIVER);
-			Connection conn=DriverManager.getConnection(Database.URL,Database.USERID,Database.PASSWORD);
-			Statement stmt=conn.createStatement();
-			String sql=String.format("SELECT * FROM Board WHERE ID='%s'",id);
-			ResultSet rs=stmt.executeQuery(sql);
+			PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.ARTICLE_FINDBYID);
+			pstmt.setString(1, id);
+			ResultSet rs=pstmt.executeQuery();
 			while(rs.next()){
 				article=new ArticleBean();
-				article.setArticleSeq(rs.getInt("article_seq"));
-				article.setId(rs.getString("id"));
-				article.setTitle(rs.getString("title"));
-				article.setContent(rs.getString("content"));
-				article.setHitcount(rs.getInt("hitcount"));
-				article.setRegdate(rs.getString("regdate"));
+				article.setArticleSeq(rs.getInt(Database.ARTICLE_SEQ));
+				article.setId(rs.getString(Database.ARTICLE_ID));
+				article.setTitle(rs.getString(Database.ARTICLE_TITLE));
+				article.setContent(rs.getString(Database.ARTICLE_CONTENT));
+				article.setHitcount(rs.getInt(Database.ARTICLE_HITCOUNT));
+				article.setRegdate(rs.getString(Database.ARTICLE_REGDATE));
 				articles.add(article);
 			}
 		} catch (Exception e) {
@@ -84,21 +89,25 @@ ArticleBean article;
 
 	@Override
 	public ArticleBean selectBySeq(String seq) {
-		article=new ArticleBean();
 		try {
-			Class.forName(Database.DRIVER);
-			Connection conn=DriverManager.getConnection(Database.URL,Database.USERID,Database.PASSWORD);
-			Statement stmt=conn.createStatement();
-			String sql=String.format("SELECT * FROM Board WHERE article_seq=%d",Integer.parseInt(seq));
-			ResultSet rs=stmt.executeQuery(sql);
+			PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.ARTICLE_FINDBYSEQ);
+			pstmt.setString(1, seq);
+			ResultSet rs=pstmt.executeQuery();
 			while(rs.next()){
-				article.setArticleSeq(rs.getInt("article_seq"));
-				article.setId(rs.getString("id"));
-				article.setTitle(rs.getString("title"));
-				article.setContent(rs.getString("content"));
-				article.setHitcount(rs.getInt("hitcount"));
-				article.setRegdate(rs.getString("regdate"));
-			}
+				article=new ArticleBean();
+				article.setArticleSeq(rs.getInt(Database.ARTICLE_SEQ));
+				article.setId(rs.getString(Database.ARTICLE_ID));
+				article.setTitle(rs.getString(Database.ARTICLE_TITLE));
+				article.setContent(rs.getString(Database.ARTICLE_CONTENT));
+				article.setHitcount(rs.getInt(Database.ARTICLE_HITCOUNT));
+				article.setRegdate(rs.getString(Database.ARTICLE_REGDATE));
+				}
+				if(!rs.next()){
+					article=new ArticleBean();
+					article.setArticleSeq(0);
+					article.setContent("조회되지 않는 번호입니다");
+				}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -109,13 +118,21 @@ ArticleBean article;
 	@Override
 	public int update(ArticleBean article) {
 		int result=0;
+		
 		try {
-			Class.forName(Database.DRIVER);
-			Connection conn=DriverManager.getConnection(Database.URL,Database.USERID,Database.PASSWORD);
-			Statement stmt=conn.createStatement();
-			String sql=String.format(
-				"UPDATE Board SET title='%s', content='%s' WHERE article_seq=%d",article.getTitle(),article.getContent(),article.getArticleSeq());
-			result=stmt.executeUpdate(sql);
+			if(article.getTitle().equals("")){
+				article.setTitle(selectBySeq(String.valueOf(article.getArticleSeq())).getTitle());
+			}
+			if(article.getContent().equals("")){
+				article.setContent(selectBySeq(String.valueOf(article.getArticleSeq())).getContent());
+			}
+			
+			PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.ARTICLE_UPDATE);
+			pstmt.setString(1, article.getTitle());
+			pstmt.setString(2, article.getContent());
+			pstmt.setInt(3, article.getArticleSeq());
+			result=pstmt.executeUpdate();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -126,11 +143,10 @@ ArticleBean article;
 	public int delete(String seq) {
 		int result=0;
 		try {
-			Class.forName(Database.DRIVER);
-			Connection conn=DriverManager.getConnection(Database.URL,Database.USERID,Database.PASSWORD);
-			Statement stmt=conn.createStatement();
-			String sql=String.format("DELETE Board WHERE article_seq=%d",Integer.parseInt(seq));
-			result=stmt.executeUpdate(sql);
+			PreparedStatement pstmt=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.ARTICLE_DELETE);
+			pstmt.setString(1, seq);
+			result=pstmt.executeUpdate();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -141,15 +157,11 @@ ArticleBean article;
 	public int count() {
 		int result=0;
 		try {
-			Class.forName(Database.DRIVER);
-			Connection conn=DriverManager.getConnection(Database.URL,Database.USERID,Database.PASSWORD);
-			Statement stmt=conn.createStatement();
-			String sql="SELECT COUNT(*) AS COUNT FROM Board";
-			ResultSet rs=stmt.executeQuery(sql);
+			ResultSet rs=DatabaseFactory.createDatabase(Vendor.ORACLE, Database.USERID, Database.PASSWORD).getConnection()
+					.prepareStatement(SQL.ARTICLE_COUNT).executeQuery();
 			while(rs.next()){
-				result=rs.getInt("count");
+				result=rs.getInt(Database.COUNT);
 			}
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
